@@ -29,59 +29,30 @@ See `docs/diagrams/end_to_end_flow.md` for the diagram.
 │   ├── 04_lessons_learned.md problems hit in a previous build, and how to avoid them
 │   ├── 05_prerequisites.md   what must be in place before you start
 │   └── diagrams/
-├── reference/                YOUR source spec docs and target model notes go here
-└── project/                  created by you in step 2: the bundle Genie Code builds into
+├── prompts/                  one prompt per step, from setup to profiling
+├── reference/                YOUR source spec docs and target model notes go here (git-ignored)
+└── project/                  created by prompts/00_setup.md: the bundle Genie Code builds into
 ```
 
 Everything Genie Code produces (bundle resources, pipeline code, analysis markdowns, mapping files) goes under `project/`. The `docs/` folder is reference material and should not be edited during a build.
 
 ## How to use it
 
-1. **Bring the repo into your workspace.** Clone it into your home folder as a Git folder, then create a feature branch for this build.
-2. **Create an empty bundle** in the `project/` folder of the repo.
-3. **Add your reference material** to `reference/`: source file specs, mapping rules, data dictionaries, and notes on your target model. Do not put data files here.
-4. **Open Genie Code in agent mode** and work through the prompts below. Each prompt references this folder with `@` so Genie Code reads the design docs.
+1. **Bring the repo into your workspace.** Clone it into your home folder as a Git folder.
+2. **Open Genie Code in agent mode** and work through the files in `prompts/`, in order. Open each file, replace everything in `<angle brackets>`, and send the prompt. Each file also says what to check before you approve the next step.
 
-### Opening prompts
+| Prompt | Phases | What it does |
+| --- | --- | --- |
+| `prompts/00_setup.md` | | Feature branch, empty bundle in `project/`, your reference material saved to `reference/` |
+| `prompts/01_orient.md` | | Genie Code reads the pack and your reference material, and lists its open questions |
+| `prompts/02_preflight_environment.md` | 0, 1 | Prerequisite checks; schema and volume as bundle resources |
+| `prompts/03_inventory_layout.md` | 2 | Raw file inventory, landing layout, file registry, upload |
+| `prompts/04_bronze.md` | 3 | Bronze ingestion pipeline |
+| `prompts/05_profiling.md` | 4 | Source profile and exploration |
 
-Replace everything in `<angle brackets>`.
+Every prompt follows the same pattern: read the earlier phase notes, meet the component spec, show the design and wait for approval, build and deploy to dev, check "Done when", write the phase notes, commit locally.
 
-**1. Orient**
-```
-@<path to this repo> Read the README and everything in docs/ and reference/.
-Describe what this pack asks us to build, the components, and the build phases.
-Do not create or change anything yet.
-```
-
-**2. Environment**
-```
-Using @<path to this repo>/docs/03_build_plan.md phase 1:
-Use catalog <CATALOG>. Create schema <SCHEMA> and volume <VOLUME> for a new data
-ingestion, defined as resources in the bundle at <path to this repo>/project.
-First check whether I can create a schema in <CATALOG>. If I can't, use the
-existing schema <FALLBACK_SCHEMA> and create only the volume there.
-Deploy the bundle to the dev target, then record what was created and why in
-project/docs/analysis/00_environment.md.
-```
-
-**3. Inventory the raw files** (attach the files, or screenshots of their headers)
-```
-These are the raw files the source sent: <count>, named <names>.
-Following phase 2 of @<path to this repo>/docs/03_build_plan.md, inventory them:
-how many, what types (data vs spec documents), formats and delimiters, header rows,
-sizes. Then recommend a folder layout in the volume so they can be auto-loaded
-into bronze, with spec documents kept out of the ingestion path.
-Write the results to project/docs/analysis/01_raw_inventory.md.
-```
-
-**4. Plan the build**
-```
-Using @<path to this repo>/docs and our outputs so far in project/docs/analysis,
-propose a build plan for the remaining phases, adapted to our files and our
-target model in <TARGET_CATALOG>.<TARGET_SCHEMA>. Show me the plan before building.
-```
-
-From there, build and iterate phase by phase. Each phase in `docs/03_build_plan.md` lists what it must produce and how to tell it is done.
+For phases 5 to 9, work from `docs/03_build_plan.md` directly, using the same pattern. Each phase lists what it must produce and how to tell it is done.
 
 ## Ground rules for the build
 
