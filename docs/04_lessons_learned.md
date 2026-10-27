@@ -35,8 +35,3 @@ Problems hit in a previous build of this pattern, and how to avoid them. These a
 - **Job retries can exhaust repair.** A run whose retries were used up may not be repairable; start a new run.
 - **Ordering matters.** If the transformation pipeline runs straight after mapping, it only sees mappings that were already approved. New proposals reach the output only after review and a second pipeline run. Design the job, or the review step, accordingly.
 
-## Permissions (optional app)
-
-- **Use PATCH to add permissions.** A PUT on a job's or pipeline's permissions replaces the whole list and fails if it would remove the owner.
-- **The app runs as its own service principal.** It needs explicit grants on the catalog, schemas, volume, tables, job and pipelines.
-- **Use the SDK's statement execution API from an app.** The SQL connector fell back to an interactive login inside the app container; the SDK authenticated as the service principal without extra configuration.
