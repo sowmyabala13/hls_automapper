@@ -1,0 +1,4 @@
+# Keep customer reference material out of Git; it stays readable with @.
+*
+!README.md
+!.gitignore

@@ -9,6 +9,20 @@ Problems hit in a previous build of this pattern, and how to avoid them. These a
 - **Use the file metadata column, not `input_file_name()`.** `input_file_name()` is not supported on serverless with Unity Catalog. Auto Loader exposes file path, name and modification time through its file metadata column.
 - **A unique ID is not a row number.** `monotonically_increasing_id()` is unique but not sequential per file. If you need a row position within a file, derive it explicitly.
 - **Infer nothing in bronze.** Keep every value as a string so codes with leading zeros and unusual date formats reach profiling intact.
+- **A field-count mismatch doesn't tell you where the drift is.** A header one column shorter than the data rows looked like one inserted field. Checking each column's values against its name showed two extra fields in one place and a missing field in another, so a single placeholder column would have left a run of columns under the wrong names. Compare header count with fields per row, then check values column by column, and never load a header that is known to be misaligned.
+- **Rescued data doesn't catch layout drift.** A permissive CSV reader fills short rows with nulls and drops extra fields without an error. Count fields per row from the raw line and check the count against the registry with a data quality expectation.
+- **Files whose names start with `_` or `.` are skipped silently.** A test file named that way never reached bronze, and nothing reported it. A real delivery named like that would be lost the same way.
+- **`delta.appendOnly = true` blocks full refresh.** A full refresh truncates the table, which the property forbids, so the refresh failed twice. Keep bronze append-only by construction during the build, and set the property (with full refresh blocked) once the layout is settled.
+- **Don't read whole files into one value.** It works on small samples and fails on real claim files. Read line by line.
+- **Hash-based row IDs repeat for identical rows.** A hash of file and row content is stable, but two identical lines in one file share it. Don't treat it as a primary key.
+
+## Profiling
+
+- **Match sensitive column names on whole words.** Substring rules flagged an ethnicity code as a city (`ETHNICITY` contains `CITY`) and a state code as a license number (`STATE_OF_LICENSE`). Review which columns each rule matches before running it.
+- **Don't hash small-space identifiers.** Every 9-digit SSN can be hashed and compared in minutes, so a hash hides nothing. Mask to the value's shape instead.
+- **Masking the table isn't enough.** Notebook output, job logs and exploration notes can copy raw values too.
+- **Small samples mislead.** With ten rows per file, dozens of columns were unique and hundreds of column pairs shared values across files. Rank identifier-like columns first and classify each candidate join before trusting it.
+- **Test data has artifacts real data won't.** Mock files reused the same values across roles (one provider for every role, subscriber always equal to member). Note them, and don't use them as mapping evidence.
 
 ## Target model
 
@@ -35,3 +49,8 @@ Problems hit in a previous build of this pattern, and how to avoid them. These a
 - **Job retries can exhaust repair.** A run whose retries were used up may not be repairable; start a new run.
 - **Ordering matters.** If the transformation pipeline runs straight after mapping, it only sees mappings that were already approved. New proposals reach the output only after review and a second pipeline run. Design the job, or the review step, accordingly.
 
+## Working with Genie Code
+
+- **Create the pipeline in the bundle before opening the pipeline editor.** Opening the editor first created a placeholder pipeline outside the bundle, and with auto-approve on, the editor could only edit that placeholder's folder, so it couldn't write the bundle's files. Deleting the placeholder afterwards was then blocked as a destructive action.
+- **Go back to the bundle after the pipeline editor.** Do the done check, notes and commit from the bundle's Git folder.
+- **Check for leftover files from interrupted turns.** Untracked files from an earlier attempt turned up mid-phase. Read them in full and compare with the approved design before using or replacing them.
